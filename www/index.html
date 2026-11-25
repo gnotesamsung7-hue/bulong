@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0f1424">
+<title>Bulong</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg:#0f1424; --panel:#171e33; --panel2:#1f2842; --line:#2a3555; --text:#e8ecf7; --dim:#8d97b5;
+          --accent:#34d1bf; --accent-ink:#06231f; --mine:#1d6f66; --warn:#f2b84b; --bad:#ef6b6b; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--text);
+    font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  button { font:inherit; color:inherit; border:0; cursor:pointer; }
+  input,textarea { font:inherit; color:var(--text); background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px 14px; width:100%; outline:none; }
+  input:focus,textarea:focus { border-color:var(--accent); }
+  .btn { background:var(--accent); color:var(--accent-ink); font-weight:700; border-radius:14px; padding:13px 18px; }
+  .btn.ghost { background:var(--panel2); color:var(--text); font-weight:600; }
+  .btn.small { padding:8px 12px; border-radius:10px; font-size:14px; }
+  .screen { position:fixed; inset:0; display:none; flex-direction:column; }
+  .screen.on { display:flex; }
+  .hidden { display:none !important; }
+
+  /* title */
+  #title { align-items:center; justify-content:center; padding:32px 24px; text-align:center; gap:14px;
+    background:radial-gradient(120% 80% at 50% 0%, #1b2a4a 0%, var(--bg) 60%); }
+  #title h1 { margin:6px 0 0; font-size:44px; letter-spacing:1px; }
+  #title p { margin:0; color:var(--dim); }
+  #title .form { width:100%; max-width:340px; display:flex; flex-direction:column; gap:12px; margin-top:18px; }
+  .version { color:var(--dim); font-size:13px; letter-spacing:.5px; }
+
+  /* top bar */
+  header { display:flex; align-items:center; gap:10px; padding:12px 14px; padding-top:max(12px, env(safe-area-inset-top));
+    background:var(--panel); border-bottom:1px solid var(--line); min-height:58px; }
+  header h2 { margin:0; font-size:19px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  header .sub { display:block; font-size:12.5px; color:var(--dim); font-weight:400; }
+  .pill { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--dim); background:var(--panel2); border-radius:99px; padding:5px 10px; white-space:nowrap; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--bad); }
+  .dot.ok { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+  .iconbtn { background:none; padding:6px 8px; font-size:20px; color:var(--text); border-radius:10px; }
+
+  main { flex:1; overflow-y:auto; padding:10px 0 16px; }
+  .banner { margin:10px 14px; padding:12px 14px; border-radius:12px; background:#3a2d12; color:#ffe2a6; font-size:14px; display:flex; gap:10px; align-items:center; }
+  .banner span { flex:1; }
+  .empty { color:var(--dim); text-align:center; padding:36px 26px; font-size:15px; }
+  .row { display:flex; align-items:center; gap:12px; padding:12px 16px; width:100%; background:none; text-align:left; border-bottom:1px solid #1a2240; }
+  .row:active { background:var(--panel); }
+  .avatar { width:44px; height:44px; border-radius:50%; flex:none; display:grid; place-items:center; font-weight:700; font-size:18px; color:#0b1020; }
+  .row .main { flex:1; min-width:0; }
+  .row .name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .meta { color:var(--dim); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .badge { background:var(--accent); color:var(--accent-ink); font-weight:700; font-size:12px; border-radius:99px; min-width:22px; padding:2px 7px; text-align:center; }
+  .section { padding:14px 16px 6px; color:var(--dim); font-size:13px; text-transform:uppercase; letter-spacing:.8px; }
+  .actions { display:flex; gap:10px; padding:8px 16px 12px; flex-wrap:wrap; }
+  .card { margin:8px 16px; padding:16px; background:var(--panel); border-radius:16px; }
+  .qrbox { background:#fff; border-radius:14px; padding:12px; width:min(260px,70vw); margin:6px auto; }
+  .qrbox svg { display:block; width:100%; height:auto; }
+  .mono { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; word-break:break-all; color:var(--dim); }
+
+  nav { display:flex; background:var(--panel); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); }
+  nav button { flex:1; background:none; padding:10px 4px 9px; color:var(--dim); font-size:12px; display:flex; flex-direction:column; align-items:center; gap:2px; position:relative; }
+  nav button b { font-size:20px; font-weight:400; }
+  nav button.on { color:var(--accent); }
+  nav .nbadge { position:absolute; top:5px; left:calc(50% + 8px); background:var(--accent); color:var(--accent-ink); font-size:11px; font-weight:700; border-radius:99px; padding:0 6px; }
+
+  /* chat */
+  #msgs { flex:1; overflow-y:auto; padding:12px 10px; display:flex; flex-direction:column; gap:4px; }
+  .b { max-width:80%; padding:8px 12px 6px; border-radius:16px; background:var(--panel2); align-self:flex-start; white-space:pre-wrap; word-wrap:break-word; }
+  .b.mine { background:var(--mine); align-self:flex-end; }
+  .b .who { font-size:12.5px; font-weight:700; color:var(--accent); }
+  .b .when { font-size:11px; color:#c5d0ea; opacity:.7; text-align:right; margin-top:2px; }
+  .daysep { align-self:center; font-size:12px; color:var(--dim); padding:8px; }
+  .composer { display:flex; gap:8px; padding:8px 10px; padding-bottom:max(8px, env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line); align-items:flex-end; }
+  .composer textarea { resize:none; max-height:120px; min-height:46px; border-radius:22px; padding:11px 16px; }
+  .send { width:46px; height:46px; border-radius:50%; background:var(--accent); color:var(--accent-ink); font-size:20px; flex:none; }
+
+  /* modal */
+  .modal { position:fixed; inset:0; background:rgba(4,7,16,.72); display:none; align-items:flex-end; justify-content:center; z-index:20; }
+  .modal.on { display:flex; }
+  .sheet { background:var(--panel); width:100%; max-width:520px; border-radius:20px 20px 0 0; padding:20px 18px; padding-bottom:max(20px, env(safe-area-inset-bottom)); max-height:92vh; overflow-y:auto; }
+  .sheet h3 { margin:0 0 8px; }
+  .sheet p { color:var(--dim); margin:6px 0 12px; font-size:14.5px; }
+  .sheet .btns { display:flex; gap:10px; margin-top:14px; }
+  .sheet .btns .btn { flex:1; }
+  .code { font-size:30px; font-weight:700; letter-spacing:3px; text-align:center; padding:14px 0; font-variant-numeric:tabular-nums; }
+  #scanVideo { width:100%; border-radius:14px; background:#000; aspect-ratio:1; object-fit:cover; }
+  .toast { position:fixed; left:50%; top:calc(70px + env(safe-area-inset-top)); transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line); padding:10px 16px; border-radius:14px; z-index:30; max-width:90vw; font-size:14.5px; box-shadow:0 8px 30px rgba(0,0,0,.4); }
+</style>
+</head>
+<body>
+
+<!-- TITLE / START -->
+<section id="title" class="screen on">
+  <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+    <path d="M48 10c22 0 38 14 38 32S70 74 48 74c-4 0-8-.5-11.6-1.5L20 84l3.4-15C15 63 10 53 10 42 10 24 26 10 48 10z" fill="#34d1bf"/>
+    <path d="M36 32l22 20-11 9V23l11 9-22 20" fill="none" stroke="#0f1424" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M66 33c3 3 4 6 4 9s-1 6-4 9M71 27c5 4 7 9 7 15s-2 11-7 15" fill="none" stroke="#0f1424" stroke-width="3.5" stroke-linecap="round" opacity=".55"/>
+  </svg>
+  <h1>Bulong</h1>
+  <p>Bluetooth messenger · no internet, no signal needed</p>
+  <div class="version" id="titleVersion"></div>
+  <div class="form">
+    <input id="nameInput" maxlength="40" placeholder="Your name" autocomplete="off">
+    <button class="btn" id="startBtn">Start</button>
+  </div>
+</section>
+
+<!-- HOME -->
+<section id="home" class="screen">
+  <header>
+    <h2 id="homeTitle">Chats</h2>
+    <div class="pill" id="meshPill"><span class="dot" id="meshDot"></span><span id="meshText">starting…</span></div>
+  </header>
+  <div id="radioBanner" class="banner hidden"><span id="radioMsg"></span><button class="btn small" id="retryBtn">Retry</button></div>
+  <main id="homeBody"></main>
+  <nav>
+    <button data-tab="chats" class="on"><b>💬</b>Chats<span class="nbadge hidden" id="unreadAll"></span></button>
+    <button data-tab="nearby"><b>📡</b>Nearby</button>
+    <button data-tab="groups"><b>👥</b>Groups</button>
+    <button data-tab="me"><b>⚙️</b>Me</button>
+  </nav>
+</section>
+
+<!-- CHAT -->
+<section id="chat" class="screen">
+  <header>
+    <button class="iconbtn" id="backBtn" aria-label="Back">←</button>
+    <h2><span id="chatTitle"></span><span class="sub" id="chatSub"></span></h2>
+    <button class="btn small ghost" id="chatInfoBtn"></button>
+  </header>
+  <div id="msgs"></div>
+  <div class="composer">
+    <textarea id="msgInput" rows="1" maxlength="2000" placeholder="Message"></textarea>
+    <button class="send" id="sendBtn" aria-label="Send">➤</button>
+  </div>
+</section>
+
+<!-- MODALS -->
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="mesh.js"></script>
+<script>
+'use strict';
+const APP_VERSION = '1.0.0';
+const DOWNLOAD_URL = 'https://github.com/gnotesamsung7-hue/bulong/releases/latest/download/Bulong.apk';
+const STORE = 'bulong.state.v1';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const Radio = window.__BULONG_SIM || (isNative ? window.Capacitor.Plugins.BulongMesh : null);
+
+let state; try { state = JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { state = {}; }
+let saveTimer = 0;
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }, 250); }
+
+let node = null, tab = 'chats', openChat = null;
+
+/* ---------- helpers ---------- */
+const COLORS = ['#34d1bf', '#f2b84b', '#8fb3ff', '#f28fb3', '#a8e06a', '#c79bff', '#ff9d6b', '#6be0f2'];
+function avatar(name, seed) { let h = 0; for (const ch of String(seed)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `<div class="avatar" style="background:${COLORS[h % COLORS.length]}">${esc((String(name).trim()[0] || '?').toUpperCase())}</div>`; }
+const hm = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+function ago(t) { const s = (Date.now() - t) / 1000; return s < 90 ? 'just now' : s < 3600 ? Math.round(s / 60) + ' min ago' : hm(t); }
+function qrSvg(text) {
+  const q = qrcode(0, 'M'); q.addData(text); q.make();
+  const n = q.getModuleCount(), m = 2; let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#0f1424"/></svg>`;
+}
+function toast(text) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+function chatName(chat) {
+  if (chat.startsWith('g:')) return (state.groups[chat.slice(2)] || {}).name || 'Group';
+  return (state.contacts[chat.slice(3)] || {}).name || 'Someone';
+}
+function shortId(id) { return '#' + String(id).slice(0, 4); }
+function hopsText(c) { return !c.hops ? '' : c.hops === 1 ? 'direct' : c.hops + ' hops away'; }
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+function modal(html) { $('#sheet').innerHTML = html; $('#modal').classList.add('on'); }
+function closeModal() { stopScan(); $('#modal').classList.remove('on'); }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+/* ---------- title ---------- */
+$('#titleVersion').textContent = 'v' + APP_VERSION;
+if (state.me) { $('#nameInput').value = state.me.name; $('#startBtn').textContent = 'Open'; }
+$('#startBtn').onclick = async () => {
+  const name = $('#nameInput').value.trim();
+  if (!name) { $('#nameInput').focus(); toast('Type your name first'); return; }
+  $('#startBtn').disabled = true;
+  await boot(name);
+};
+$('#nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('#startBtn').click(); });
+
+/* ---------- boot + radio ---------- */
+async function boot(name) {
+  node = new BulongMesh.MeshNode({
+    state, save,
+    transport: {
+      connect: ep => Radio.connect({ endpointId: ep }),
+      disconnect: ep => Radio.disconnect({ endpointId: ep }),
+      send: (eps, data) => Radio.send({ endpointIds: eps, data }),
+    },
+    onEvent,
+  });
+  await node.init(name);
+  location.hash = '#home';
+  route();
+  setInterval(() => { if (node) { node.tick(); updatePill(); if (tab === 'nearby' && !openChat) renderHome(); } }, 2000);
+  await startRadio();
+}
+
+async function startRadio() {
+  if (!Radio) { radioProblem('Preview mode: install the Bulong APK to message over Bluetooth.', false); return; }
+  try {
+    if (!Radio.__listening) {
+      Radio.__listening = true;
+      Radio.addListener('found', e => node.onFound(e.endpointId, e.name));
+      Radio.addListener('lost', e => node.onLost(e.endpointId));
+      Radio.addListener('connected', e => node.onConnected(e.endpointId, e.name));
+      Radio.addListener('connectFailed', e => node.onConnectFailed(e.endpointId));
+      Radio.addListener('disconnected', e => node.onDisconnected(e.endpointId));
+      Radio.addListener('data', e => node.onData(e.endpointId, e.data));
+      Radio.addListener('error', e => console.warn('radio', e.where, e.message));
+    }
+    const p = await Radio.askPerms();
+    if (!p.granted) { radioProblem('Bulong needs the "Nearby devices" permission (and Location on Android 12 or older) to find other phones.', true); return; }
+    await Radio.start({ name: node.id });
+    $('#radioBanner').classList.add('hidden');
+  } catch (e) {
+    radioProblem('Couldn\'t start Bluetooth. Turn on Bluetooth (and Location on older phones), then tap Retry. (' + (e && e.message || e) + ')', true);
+  }
+  updatePill();
+}
+function radioProblem(msg, retry) { $('#radioMsg').textContent = msg; $('#retryBtn').classList.toggle('hidden', !retry); $('#radioBanner').classList.remove('hidden'); }
+$('#retryBtn').onclick = () => startRadio();
+
+function updatePill() {
+  if (!node) return;
+  const l = node.links.size, n = node.online().length;
+  $('#meshDot').classList.toggle('ok', l > 0);
+  $('#meshText').textContent = l ? `${l} linked · ${n} nearby` : 'searching…';
+}
+
+function onEvent(type, data) {
+  if (type === 'msg') {
+    if (openChat === data.chat) { delete (state.unread || {})[data.chat]; save(); renderMsgs(); }
+    else { if (!data.msg.mine) toast(`${chatName(data.chat)}: ${data.msg.text.slice(0, 60)}`); refreshHome(); }
+    updateUnread();
+  } else if (type === 'status') { if (openChat === data.chat) renderMsgs(); }
+  else if (type === 'peers' || type === 'chats') refreshHome();
+  else if (type === 'links') updatePill();
+}
+
+function refreshHome() { if (!openChat && tab !== 'me') renderHome(); }  // never wipe the name box while typing
+
+/* ---------- routing (hardware back button follows history) ---------- */
+window.addEventListener('hashchange', route);
+function route() {
+  if (!node) { show('title'); return; }
+  const h = location.hash;
+  if (h.startsWith('#chat=')) { openChatView(decodeURIComponent(h.slice(6))); return; }
+  closeModal(); openChat = null; show('home'); renderHome();
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => { tab = b.dataset.tab; renderHome(); });
+function goChat(chat) { location.hash = '#chat=' + encodeURIComponent(chat); }
+
+/* ---------- home tabs ---------- */
+function updateUnread() {
+  const n = Object.values(state.unread || {}).reduce((a, b) => a + b, 0);
+  $('#unreadAll').textContent = n; $('#unreadAll').classList.toggle('hidden', !n);
+}
+function renderHome() {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  $('#homeTitle').textContent = { chats: 'Chats', nearby: 'Nearby', groups: 'Groups', me: 'Me' }[tab];
+  const body = $('#homeBody'); updateUnread(); updatePill();
+  if (tab === 'chats') {
+    const ids = new Set(Object.keys(state.chats).filter(c => state.chats[c].length));
+    Object.keys(state.groups).forEach(g => ids.add('g:' + g));
+    const list = [...ids].map(c => ({ c, last: (state.chats[c] || []).slice(-1)[0] }))
+      .sort((a, b) => ((b.last || {}).t || 0) - ((a.last || {}).t || 0));
+    body.innerHTML = list.length ? list.map(({ c, last }) => {
+      const un = (state.unread || {})[c] || 0, name = chatName(c);
+      const preview = last ? (last.mine ? 'You: ' : c.startsWith('g:') ? last.name + ': ' : '') + last.text : 'No messages yet';
+      return `<button class="row" data-chat="${esc(c)}">${avatar(c.startsWith('g:') ? '👥' : name, c)}<div class="main"><div class="name">${esc(name)}</div><div class="meta">${esc(preview)}</div></div>${un ? `<span class="badge">${un}</span>` : last ? `<span class="meta">${hm(last.t)}</span>` : ''}</button>`;
+    }).join('') : `<div class="empty">No chats yet.<br><br>Open <b>Nearby</b> to see people around you who have Bulong, or <b>Groups</b> to make a group.</div>`;
+  } else if (tab === 'nearby') {
+    const on = node.online();
+    body.innerHTML = `<div class="card" style="font-size:14px;color:var(--dim)">Phones link up automatically over Bluetooth and pass messages along, so you can reach people farther than one phone's range. Private chats are end-to-end encrypted: phones in between can't read them.</div>` +
+      (on.length ? `<div class="section">On the mesh now (${on.length})</div>` + on.map(c =>
+        `<button class="row" data-chat="dm:${esc(c.id)}">${avatar(c.name, c.id)}<div class="main"><div class="name">${esc(c.name)} <span class="meta">${shortId(c.id)}</span></div><div class="meta">${hopsText(c)}</div></div><span class="meta">Chat ›</span></button>`).join('')
+        : `<div class="empty">Looking for phones with Bulong…<br><br>Ask friends to open the app. Phones within about 10–30 m link up by themselves.</div>`);
+  } else if (tab === 'groups') {
+    const gs = Object.entries(state.groups);
+    body.innerHTML = `<div class="actions"><button class="btn" id="newGroup">＋ New group</button><button class="btn ghost" id="scanGroup">📷 Scan invite</button><button class="btn ghost" id="pasteGroup">Paste invite</button></div>` +
+      (gs.length ? gs.map(([tag, g]) => `<button class="row" data-chat="g:${tag}">${avatar('👥', 'g:' + tag)}<div class="main"><div class="name">${esc(g.name)}</div><div class="meta">Encrypted group</div></div><span class="meta">›</span></button>`).join('')
+        : `<div class="empty">Make a group, then let others scan its QR code to join. Only people with the code can read the group.</div>`);
+    $('#newGroup').onclick = newGroupDialog; $('#scanGroup').onclick = scanDialog; $('#pasteGroup').onclick = pasteDialog;
+  } else {
+    body.innerHTML = `<div class="card"><div class="section" style="padding:0 0 8px">Your name</div>
+        <div style="display:flex;gap:8px"><input id="meName" maxlength="40" value="${esc(state.me.name)}"><button class="btn small" id="meSave">Save</button></div>
+        <p class="mono" style="margin:10px 0 0">Your ID ${shortId(node.id)} · ${esc(node.id)}</p></div>
+      <div class="card" style="text-align:center"><div class="section" style="padding:0 0 6px">Share Bulong</div>
+        <div class="qrbox" id="appQr">${qrSvg(DOWNLOAD_URL)}</div>
+        <p style="color:var(--dim);font-size:14px;margin:6px 0">Scan to download the latest Bulong app (needs internet once).</p>
+        <p class="mono">${esc(DOWNLOAD_URL)}</p></div>
+      <div class="empty" style="padding:16px">Bulong v${APP_VERSION}</div>`;
+    $('#meSave').onclick = () => { const v = $('#meName').value.trim(); if (!v) return; state.me.name = v.slice(0, 40); save(); toast('Saved. Others will see the new name in a minute.'); node.lastHello = 0; };
+  }
+  body.querySelectorAll('[data-chat]').forEach(r => r.onclick = () => goChat(r.dataset.chat));
+}
+
+/* ---------- groups ---------- */
+function newGroupDialog() {
+  modal(`<h3>New group</h3><p>Give it a name. You'll get a QR code others scan to join.</p>
+    <input id="gName" maxlength="40" placeholder="e.g. Pamilya, Barkada, Team A"><div class="btns"><button class="btn ghost" id="mCancel">Cancel</button><button class="btn" id="mOk">Create</button></div>`);
+  $('#gName').focus(); $('#mCancel').onclick = closeModal;
+  $('#mOk').onclick = async () => { const n = $('#gName').value.trim(); if (!n) return; const tag = await node.createGroup(n); closeModal(); goChat('g:' + tag); setTimeout(() => inviteDialog(tag), 300); };
+}
+function inviteDialog(tag) {
+  const inv = node.inviteFor(tag);
+  modal(`<h3>Invite to ${esc(state.groups[tag].name)}</h3><p>Let others scan this in Bulong → Groups → Scan invite. Anyone with this code can read the group, so only show it to people you trust.</p>
+    <div class="qrbox">${qrSvg(inv)}</div>
+    <div class="btns"><button class="btn ghost" id="mCopy">Copy invite text</button><button class="btn" id="mOk">Done</button></div>
+    <div class="btns"><button class="btn ghost" id="mLeave" style="color:var(--bad)">Leave group</button></div>`);
+  $('#mOk').onclick = closeModal;
+  $('#mCopy').onclick = async () => { try { await navigator.clipboard.writeText(inv); toast('Invite copied'); } catch (e) { prompt('Copy this invite:', inv); } };
+  $('#mLeave').onclick = () => { if (confirm('Leave this group and delete its messages on this phone?')) { node.leaveGroup(tag); closeModal(); location.hash = '#home'; } };
+}
+async function joinFromText(text) {
+  try { const tag = await node.joinGroup(text); closeModal(); toast('Joined ' + state.groups[tag].name); goChat('g:' + tag); }
+  catch (e) { toast('That isn\'t a Bulong group invite'); }
+}
+function pasteDialog() {
+  modal(`<h3>Paste invite</h3><p>Paste the invite text someone sent you.</p><textarea id="invText" rows="3" placeholder="bulong:g:…"></textarea>
+    <div class="btns"><button class="btn ghost" id="mCancel">Cancel</button><button class="btn" id="mOk">Join</button></div>`);
+  $('#mCancel').onclick = closeModal; $('#mOk').onclick = () => joinFromText($('#invText').value);
+}
+let scanStream = null, scanRaf = 0;
+async function scanDialog() {
+  modal(`<h3>Scan group invite</h3><p>Point the camera at the group's QR code.</p><video id="scanVideo" playsinline muted></video><canvas id="scanCanvas" class="hidden"></canvas>
+    <div class="btns"><button class="btn ghost" id="mCancel">Cancel</button></div>`);
+  $('#mCancel').onclick = closeModal;
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const v = $('#scanVideo'); v.srcObject = scanStream; await v.play();
+    const cv = $('#scanCanvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+    const loop = () => {
+      if (!scanStream) return;
+      if (v.videoWidth) {
+        cv.width = v.videoWidth; cv.height = v.videoHeight; ctx.drawImage(v, 0, 0);
+        const r = jsQR(ctx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, { inversionAttempts: 'dontInvert' });
+        if (r && BulongMesh.parseInvite(r.data)) { const d = r.data; stopScan(); joinFromText(d); return; }
+      }
+      scanRaf = requestAnimationFrame(loop);
+    };
+    loop();
+  } catch (e) { stopScan(); toast('Camera not available. Use "Paste invite" instead.'); }
+}
+function stopScan() { cancelAnimationFrame(scanRaf); if (scanStream) scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+
+/* ---------- chat view ---------- */
+function openChatView(chat) {
+  const isGroup = chat.startsWith('g:');
+  if (isGroup ? !state.groups[chat.slice(2)] : !state.contacts[chat.slice(3)]) { location.hash = '#home'; return; }
+  openChat = chat; show('chat');
+  if (state.unread) { delete state.unread[chat]; save(); }
+  $('#chatTitle').textContent = chatName(chat);
+  $('#chatInfoBtn').textContent = isGroup ? 'Invite' : '🔒 Code';
+  $('#chatInfoBtn').onclick = isGroup ? () => inviteDialog(chat.slice(2)) : safetyDialog;
+  renderMsgs();
+  $('#msgInput').focus();
+}
+function chatSub() {
+  if (openChat.startsWith('g:')) return 'Encrypted group';
+  const c = state.contacts[openChat.slice(3)];
+  return shortId(openChat.slice(3)) + ' · ' + (Date.now() - (c.lastSeen || 0) < 180e3 ? 'nearby, ' + hopsText(c) : c.lastSeen ? 'last seen ' + ago(c.lastSeen) : 'not seen yet');
+}
+function renderMsgs() {
+  if (!openChat) return;
+  $('#chatSub').textContent = chatSub();
+  const list = state.chats[openChat] || [], isGroup = openChat.startsWith('g:');
+  let lastDay = '', html = '';
+  for (const m of list) {
+    const day = new Date(m.t).toDateString();
+    if (day !== lastDay) { html += `<div class="daysep">${day === new Date().toDateString() ? 'Today' : esc(day)}</div>`; lastDay = day; }
+    const tick = !m.mine ? '' : m.status === 'delivered' ? ' ✓✓' : m.status === 'sent' ? ' ✓' : ' 🕓 waiting for a nearby phone';
+    html += `<div class="b${m.mine ? ' mine' : ''}">${isGroup && !m.mine ? `<div class="who">${esc(m.name)}</div>` : ''}${esc(m.text)}<div class="when">${hm(m.t)}${tick}</div></div>`;
+  }
+  const box = $('#msgs');
+  box.innerHTML = html || `<div class="empty">${isGroup ? 'Say hi to the group 👋' : 'Messages are end-to-end encrypted. Only you and ' + esc(chatName(openChat)) + ' can read them.'}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+async function sendCurrent() {
+  const ta = $('#msgInput'), text = ta.value.trim();
+  if (!text || !openChat) return;
+  ta.value = ''; ta.style.height = '';
+  if (openChat.startsWith('g:')) await node.sendGroup(openChat.slice(2), text); else await node.sendDM(openChat.slice(3), text);
+  ta.focus();
+}
+$('#sendBtn').onclick = sendCurrent;
+$('#msgInput').addEventListener('input', e => { e.target.style.height = ''; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; });
+$('#backBtn').onclick = () => history.length > 1 ? history.back() : (location.hash = '#home');
+async function safetyDialog() {
+  const id = openChat.slice(3), c = state.contacts[id];
+  modal(`<h3>Safety code with ${esc(c.name)}</h3><p>Compare this with the code on ${esc(c.name)}'s phone (open your chat → 🔒 Code). If they match, nobody is pretending to be them.</p>
+    <div class="code">${await node.safetyCode(id)}</div><div class="btns"><button class="btn" id="mOk">OK</button></div>`);
+  $('#mOk').onclick = closeModal;
+}
+route();
+</script>
+</body>
+</html>

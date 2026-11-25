@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bulong</string>
+    <string name="title_activity_main">Bulong</string>
+    <string name="package_name">io.github.gnotesamsung7hue.bulong</string>
+    <string name="custom_url_scheme">io.github.gnotesamsung7hue.bulong</string>
+</resources>
