@@ -72,10 +72,9 @@ public class BulongMeshPlugin extends Plugin {
         if (Build.VERSION.SDK_INT >= 33) {
             p.add(Manifest.permission.NEARBY_WIFI_DEVICES);
         }
-        if (Build.VERSION.SDK_INT <= 32) {
-            p.add(Manifest.permission.ACCESS_FINE_LOCATION);
-            p.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        }
+        // Nearby Connections checks location on every Android version
+        p.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        p.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         return p.toArray(new String[0]);
     }
 
