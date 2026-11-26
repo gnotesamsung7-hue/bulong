@@ -144,7 +144,7 @@
 <script src="mesh.js"></script>
 <script>
 'use strict';
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const DOWNLOAD_URL = 'https://github.com/gnotesamsung7-hue/bulong/releases/latest/download/Bulong.apk';
 const STORE = 'bulong.state.v1';
 
@@ -226,11 +226,11 @@ async function startRadio() {
       Radio.addListener('error', e => console.warn('radio', e.where, e.message));
     }
     const p = await Radio.askPerms();
-    if (!p.granted) { radioProblem('Bulong needs the "Nearby devices" permission (and Location on Android 12 or older) to find other phones.', true); return; }
+    if (!p.granted) { radioProblem('Bulong needs the "Nearby devices" and "Location" permissions to find other phones.', true); return; }
     await Radio.start({ name: node.id });
     $('#radioBanner').classList.add('hidden');
   } catch (e) {
-    radioProblem('Couldn\'t start Bluetooth. Turn on Bluetooth (and Location on older phones), then tap Retry. (' + (e && e.message || e) + ')', true);
+    radioProblem('Couldn\'t start Bluetooth. Turn on Bluetooth and Location, allow the app permissions, then tap Retry. (' + (e && e.message || e) + ')', true);
   }
   updatePill();
 }
